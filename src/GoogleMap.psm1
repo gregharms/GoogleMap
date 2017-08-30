@@ -90,9 +90,9 @@ Function Get-GeoCoding
             {
                 $FormattedAddress = $Item.replace(" ","+")
 
-                $webpage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/geocode/json?address=$FormattedAddress&key=$env:GoogleGeocode_API_Key" -UseBasicParsing -ErrorVariable EV
-                $Results = $webpage.Content | ConvertFrom-Json | select Results -ExpandProperty Results
-                $Status = $webpage.Content | ConvertFrom-Json | select Status -ExpandProperty Status
+                $webpage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/geocode/jsonWhere-Object address=$FormattedAddress&key=$env:GoogleGeocode_API_Key" -UseBasicParsing -ErrorVariable EV
+                $Results = $webpage.Content | ConvertFrom-Json | Select-Object Results -ExpandProperty Results
+                $Status = $webpage.Content | ConvertFrom-Json | Select-Object Status -ExpandProperty Status
                 
                 If($Status -eq "OK")
                 {
@@ -101,11 +101,11 @@ Function Get-GeoCoding
                     {
                         $AddressComponents = $R.address_components
 
-                        $R | Select @{n='InputAddress';e={$Item}},`
+                        $R | Select-Object @{n='InputAddress';e={$Item}},`
                                           @{n='Address';e={$_.Formatted_address}},`
-                                          @{n='Country';e={($AddressComponents | ?{$_.types -like "*Country*"}).Long_name}},`
-                                          @{n='State';e={($AddressComponents | ?{$_.types -like "*administrative_area_level_1*"}).Long_name}},`
-                                          @{n='PostalCode';e={($AddressComponents | ?{$_.types -like "*postal_code*"}).Long_name}},`
+                                          @{n='Country';e={($AddressComponents | Where-Object {$_.types -like "*Country*"}).Long_name}},`
+                                          @{n='State';e={($AddressComponents | Where-Object {$_.types -like "*administrative_area_level_1*"}).Long_name}},`
+                                          @{n='PostalCode';e={($AddressComponents | Where-Object {$_.types -like "*postal_code*"}).Long_name}},`
                                           @{n='Latitude';e={"{0:N7}" -f $_.Geometry.Location.Lat}},`
                                           @{n='Longitude';e={"{0:N7}" -f $_.Geometry.Location.Lng}},`
                                           @{n='Coordinates';e={"$("{0:N7}" -f $_.Geometry.Location.Lat),$("{0:N7}" -f $_.Geometry.Location.Lng)"}}
@@ -181,7 +181,7 @@ Function Get-ReverseGeoCoding
         {
             Try
             {
-                $webpage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/geocode/json?latlng=$($item.tostring())&key=$env:GoogleGeocode_API_Key" -UseBasicParsing -ErrorVariable EV
+                $webpage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/geocode/jsonWhere-Object latlng=$($item.tostring())&key=$env:GoogleGeocode_API_Key" -UseBasicParsing -ErrorVariable EV
                 
                 # Capturing the content from the Webpage as JSON
                 $content = $webpage.Content| ConvertFrom-Json
@@ -193,7 +193,7 @@ Function Get-ReverseGeoCoding
                 # Condition to Check 'Zero Results'
                 If($status -eq 'OK')
                 {
-                    ''|select @{n='Coordinates';e={$Item.tostring()}}, @{n='Address';e={$MostSpecificAddress}}
+                    ''|Select-Object @{n='Coordinates';e={$Item.tostring()}}, @{n='Address';e={$MostSpecificAddress}}
                 }
                 Elseif($status -eq 'ZERO_RESULTS')
                 {
@@ -305,7 +305,7 @@ Function Get-Direction
     
     $Units='metric' # Default set to Kilometers
     
-    # If Switch is selected, use 'Miles' as the Unit
+    # If Switch is Select-Objected, use 'Miles' as the Unit
     If($InMiles){$Units = 'imperial'}
 
      If(!$env:GoogleDirection_API_Key)
@@ -316,7 +316,7 @@ Function Get-Direction
     #Requesting Web Page
     Try
     {
-        $WebPage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/directions/json?origin=$From&destination=$To&mode=$($mode.toLower())&units=$Units&key=$env:GoogleDirection_API_Key" -UseBasicParsing -ErrorVariable EV
+        $WebPage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/directions/jsonWhere-Object origin=$From&destination=$To&mode=$($mode.toLower())&units=$Units&key=$env:GoogleDirection_API_Key" -UseBasicParsing -ErrorVariable EV
         $Content=$WebPage.Content|ConvertFrom-Json
         
         $status = $Content.Status #Status of API response
@@ -335,7 +335,7 @@ Function Get-Direction
         
         If($status -eq 'OK')
         {
-            $Routes| Select @{n='Instructions';e={Remove-UnwantedString($_.html_instructions)}},`
+            $Routes| Select-Object @{n='Instructions';e={Remove-UnwantedString($_.html_instructions)}},`
                             #@{n='Duration(In Sec)';e={$_.duration.value}},`
                             @{n='Duration';e={$_.duration.text}},`
                             #@{n='Distance(Meters/Feets)';e={$_.distance.value}},`
@@ -410,7 +410,7 @@ Function Get-Distance
 
     If($InMiles)
     {
-        $Units = 'imperial'  # If Switch is selected, use 'Miles' as the Unit
+        $Units = 'imperial'  # If Switch is Select-Objected, use 'Miles' as the Unit
     }
 
     If(!$env:GoogleDistance_API_Key)
@@ -422,7 +422,7 @@ Function Get-Distance
     {
 
         #Invoking the web URL and fetching the page content
-        $webpage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/distancematrix/json?origins=$From&destinations=$To&mode=$($Mode.toLower())&units=$Units&key=$env:GoogleDistance_API_Key" -UseBasicParsing -ErrorVariable EV
+        $webpage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/distancematrix/jsonWhere-Object origins=$From&destinations=$To&mode=$($Mode.toLower())&units=$Units&key=$env:GoogleDistance_API_Key" -UseBasicParsing -ErrorVariable EV
         
         # Capturing the content from the Webpage
         $content = $webpage.Content | ConvertFrom-Json
@@ -437,7 +437,7 @@ Function Get-Distance
 
             If(!$Results.elements.fare.value)
             {   
-                $Results| select @{n='From';e={$OriginAddress}},` 
+                $Results| Select-Object @{n='From';e={$OriginAddress}},`
                                  @{n='To';e={$DestinationAddress}},`
                                  @{n='Time';e={$Results.elements.duration.text}},`
                                  @{n='Distance';e={$Results.elements.distance.text}},`
@@ -445,7 +445,7 @@ Function Get-Distance
             }
             Else
             {
-                $Results| select @{n='From';e={$OriginAddress}},` 
+                $Results| Select-Object @{n='From';e={$OriginAddress}},`
                                  @{n='To';e={$DestinationAddress}},`
                                  @{n='Time';e={$Results.elements.duration.text}},`
                                  @{n='Distance';e={$Results.elements.distance.text}},`
@@ -485,7 +485,7 @@ Function Get-Distance
     
     
     
-    PS D:\> "white house","Microsoft redmund" | Get-GeoCoding | select Coordinates -ExpandProperty Coordinates | Get-TimeZone
+    PS D:\> "white house","Microsoft redmund" | Get-GeoCoding | Select-Object Coordinates -ExpandProperty Coordinates | Get-TimeZone
     
     TimeZone              TimeZoneID          LocalTime           
     --------              ----------          ---------           
@@ -534,16 +534,16 @@ Function Get-TimeZone
 
         If($Place)
         {
-            $Coordinates = $Place | Foreach{(Get-GeoCoding -Address $_)[0].coordinates}
+            $Coordinates = $Place | ForEach-Object {(Get-GeoCoding -Address $_)[0].coordinates}
         }
 
         ForEach($Item in $Coordinates)
         {
             Try
             {
-                $Webpage = Invoke-WebRequest -Uri "https://maps.googleapis.com/maps/api/timezone/json?location=$Item&timestamp=$TimeStamp&key=$env:GoogleTimezone_API_Key" -UseBasicParsing -ErrorVariable EV                           
+                $Webpage = Invoke-WebRequest -Uri "https://maps.googleapis.com/maps/api/timezone/jsonWhere-Object location=$Item&timestamp=$TimeStamp&key=$env:GoogleTimezone_API_Key" -UseBasicParsing -ErrorVariable EV                           
                 $Webpage.Content | ConvertFrom-Json|`
-                Select-Object @{n='TimeZone';e={$_.timezonename}}, @{n='TimeZoneID';e={$_.timezoneID}}, @{n='LocalTime';e={($SourceDateTime.ToUniversalTime()).AddSeconds($_.dstOffset+$_.rawoffset+$TimeStamp)}}, @{n='DSTOffsetHours';e={([timespan]::FromSeconds($_.dstoffset)).tostring("hh\:mm\:ss")}}
+                Select-Object-Object @{n='TimeZone';e={$_.timezonename}}, @{n='TimeZoneID';e={$_.timezoneID}}, @{n='LocalTime';e={($SourceDateTime.ToUniversalTime()).AddSeconds($_.dstOffset+$_.rawoffset+$TimeStamp)}}, @{n='DSTOffsetHours';e={([timespan]::FromSeconds($_.dstoffset)).tostring("hh\:mm\:ss")}}
             }
             Catch
             {
@@ -572,7 +572,7 @@ Function Get-TimeZone
 .PARAMETER Keyword
     Keywords are one or more terms to be matched against the names of places. Results will be restricted to those containing the passed keyword values.
 .EXAMPLE
-    PS D:\> Get-GeoCoding "eiffel tower"| select latlng -ExpandProperty latlng -OutVariable latlng
+    PS D:\> Get-GeoCoding "eiffel tower"| Select-Object latlng -ExpandProperty latlng -OutVariable latlng
     48.8583701,2.2944813
     
     PS D:\> Get-NearbyPlace -LatLng $latlng -Radius 500 -Type dance -Keyword music | ft -AutoSize
@@ -586,7 +586,7 @@ Function Get-TimeZone
    In above example, First we calculated the Latitude and Logitude of "Eiffel Tower" then we passed this info to Get-Nearbyplace function to search for places within radius of 500 meter, with "dance" type and keyword "Music" 
 
 .EXAMPLE
-    PS D:\> "eiffel tower","white house"|Get-GeoCoding| select latlng -ExpandProperty latlng | Get-NearbyPlace -Radius 500 -Type food -Keyword indian | ft -AutoSize
+    PS D:\> "eiffel tower","white house"|Get-GeoCoding| Select-Object latlng -ExpandProperty latlng | Get-NearbyPlace -Radius 500 -Type food -Keyword indian | ft -AutoSize
     
     Name            Address                                        TypeOfPlace Coordinates                         OpenNow
     ----            -------                                        ----------- -----------                         -------
@@ -628,7 +628,7 @@ Function Get-NearbyPlace
         {
             Try
             {
-                $webpage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$($Item.tostring())&radius=$Radius&types=$Type&name=$(([string]$Keyword).replace(' ','|'))&key=$env:GooglePlaces_API_Key" -UseBasicParsing -ErrorVariable ev
+                $webpage = Invoke-WebRequest "https://maps.googleapis.com/maps/api/place/nearbysearch/jsonWhere-Object location=$($Item.tostring())&radius=$Radius&types=$Type&name=$(([string]$Keyword).replace(' ','|'))&key=$env:GooglePlaces_API_Key" -UseBasicParsing -ErrorVariable ev
                 
                 # Capturing the content from the Webpage as XML
                 $content = $webpage.Content|ConvertFrom-Json
@@ -638,8 +638,8 @@ Function Get-NearbyPlace
                 # Condition to Check 'Zero Results'
                 If($status -eq 'OK')
                 {
-                $Results| select @{n='Name';e={$_.name}},`
-                                 @{n='Address';e={$_.Vicinity}},` 
+                $Results| Select-Object @{n='Name';e={$_.name}},`
+                                 @{n='Address';e={$_.Vicinity}},`
                                  @{n='TypeOfPlace';e={(Get-Culture).TextInfo.ToTitleCase((($_.Types)[0]).replace('_',' '))}},`
                                  @{n='Coordinates';e={"$("{0:N7}" -f $_.geometry.location.lat),$("{0:N7}" -f $_.geometry.location.lng)"}},`
                                  @{n='OpenNow';e={if($_.opening_hours){($_.opening_hours).open_now}else{"Info not available"}}}
@@ -696,7 +696,7 @@ Function Get-GeoLocation
             [Switch] $WithCoordinates
     )
     
-    $WiFiAccessPointMACAdddress = netsh wlan show networks mode=Bssid | Where-Object{$_ -like "*BSSID*"} | %{($_.split(" ")[-1]).toupper()}
+    $WiFiAccessPointMACAdddress = netsh wlan show networks mode=Bssid | Where-Object{$_ -like "*BSSID*"} | ForEach-Object {($_.split(" ")[-1]).toupper()}
     
     If(!$env:GoogleGeoloc_API_Key)
     {
@@ -714,7 +714,7 @@ Function Get-GeoLocation
 
         Try
         {
-            $webpage = Invoke-WebRequest -Uri "https://www.googleapis.com/geolocation/v1/geolocate?key=$env:GoogleGeoloc_API_Key" `
+            $webpage = Invoke-WebRequest -Uri "https://www.googleapis.com/geolocation/v1/geolocateWhere-Object key=$env:GoogleGeoloc_API_Key" `
                                          -ContentType "application/json" `
                                          -Body $Body `
                                          -UseBasicParsing `
@@ -730,14 +730,14 @@ Function Get-GeoLocation
         $YourCoordinates = ($webpage.Content | ConvertFrom-Json).location
 
         #Converting your corridnates to "Latitude,Longitude" string in order to reverse geocode it to obtain your address
-        $LatLang = ($YourCoordinates | Select @{n='LatLng';e={"$("{0:N7}" -f $_.lat),$("{0:N7}" -f $_.lng)"}}).LatLng 
+        $LatLang = ($YourCoordinates | Select-Object @{n='LatLng';e={"$("{0:N7}" -f $_.lat),$("{0:N7}" -f $_.lng)"}}).LatLng 
         
         #Your address
         $Address = ($LatLang| Get-ReverseGeoCoding).Address
 
         If($WithCoordinates)
         {
-            ''|Select @{n='Address';e={$Address}}, @{n='Coordinates';e={$LatLang}}
+            ''|Select-Object @{n='Address';e={$Address}}, @{n='Coordinates';e={$LatLang}}
         }
         else
         {
