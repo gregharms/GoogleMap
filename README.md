@@ -21,3 +21,5 @@ Get-GeoLocation : https://developers.google.com/maps/documentation/geolocation/g
 Get-NearbyPlace : https://developers.google.com/places/web-service/get-api-key <br />
 Get-ReverseGeoCoding : https://developers.google.com/maps/documentation/geocoding/get-api-key <br />
 Get-TimeZone : https://developers.google.com/maps/documentation/timezone/get-api-key <br />
+
+May need to enable the newly procured API keys in the Google API Console : https://console.developers.google.com/projectselector/apis/enabled
