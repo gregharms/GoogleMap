@@ -34,7 +34,15 @@ Function Get-GeoLocation
             [Switch] $WithCoordinates
     )
     
-    $WiFiAccessPointMACAdddress = netsh wlan show networks mode=Bssid | Where-Object {$_ -like "*BSSID*"} | ForEach-Object {($_.split(" ")[-1]).toupper()}
+    $WiFiAccessPointMACAdddress = if ($PSVersionTable.Platform -eq 'Unix') {
+        if ($PSVersionTable.OS -like 'Darwin *') {
+            (system_profiler SPNetworkDataType | grep RouterHardwareAddress).split('=')[2]
+        } elseif ($PSVersionTable.OS -like 'Linux *') {
+            #Linux
+        }
+    } else {
+        netsh wlan show networks mode=Bssid | Where-Object {$_ -like "*BSSID*"} | ForEach-Object {($_.split(" ")[-1]).toupper()}
+    }
     
     If(!$env:GoogleGeoloc_API_Key)
     {
@@ -43,7 +51,7 @@ Function Get-GeoLocation
 
     If(!$WiFiAccessPointMACAdddress)
     {
-        "No Wifi Access point found! Please make sure your WiFi is ON."
+        Write-Error "No Wifi Access point found! Please make sure your WiFi is ON."
     }
     Else
     {
